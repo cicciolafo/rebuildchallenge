@@ -1770,7 +1770,7 @@ async function _waitRateLimit(){
 }
 
 async function apiCall(endpoint, params={}, cacheHours=24){
-  const cacheKey = endpoint.replace(/\/g,'_') + '_' + JSON.stringify(params);
+  const cacheKey = endpoint.split('/').join('_') + '_' + JSON.stringify(params);
 
   // 1. Check in-memory cache first (instant, no Firebase call)
   if(_memCache[cacheKey] && (Date.now() - _memCache[cacheKey].cachedAt) < cacheHours * 3600000){
