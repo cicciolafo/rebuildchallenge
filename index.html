@@ -414,17 +414,7 @@ h2{font-family:'Bebas Neue';font-size:32px;letter-spacing:3px;line-height:1}
         SQUADRE SELEZIONATE E BUDGET
       </div>
       <div class="selected-teams" id="selectedTeams">
-        ${[0,1,2].map(i=>`
-          <div class="selected-team-row" id="teamSlot${i}">
-            <div style="width:32px;height:32px;border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--border);font-size:18px">?</div>
-            <div class="selected-team-info">
-              <div class="selected-team-name" style="color:var(--muted)">Slot ${i+1} — Squadra non selezionata</div>
-              <div class="selected-team-league"></div>
-            </div>
-            <div style="font-size:11px;color:var(--muted)">Budget:</div>
-            <input class="budget-input" id="budget${i}" value="${[100,70,85][i]}" type="number" min="10" max="500" />
-            <div style="font-size:11px;color:var(--muted)">M</div>
-          </div>`).join('')}
+        <!-- populated by renderSelectedTeams() -->
       </div>
       <div id="rosterLoadStatus" style="margin-top:12px"></div>
     </div>
