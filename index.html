@@ -2061,11 +2061,33 @@ if(document.readyState === 'loading'){
 }
 </script>
 
-<!-- Firebase SDKs loaded AFTER all game JS — guarantees firebase global exists -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
-(function(){
+/* ── Firebase: load dynamically so fallback works even if CDN is blocked ── */
+function _activateLocalStorage(){
+  window._fb = {
+    async saveGame(key, data){
+      const saves = JSON.parse(localStorage.getItem('cm_saves')||'{}');
+      saves[key] = data;
+      localStorage.setItem('cm_saves', JSON.stringify(saves));
+    },
+    async loadAll(){
+      return JSON.parse(localStorage.getItem('cm_saves')||'{}');
+    },
+    async deleteGame(key){
+      const saves = JSON.parse(localStorage.getItem('cm_saves')||'{}');
+      delete saves[key];
+      localStorage.setItem('cm_saves', JSON.stringify(saves));
+    }
+  };
+  window._fbReady = true;
+  window._onFirebaseReady();
+  const lbl = document.getElementById('fbLabel');
+  const dot = document.getElementById('fbDot');
+  if(lbl) lbl.textContent = 'Salvataggio locale';
+  if(dot) dot.style.background = 'var(--gold)';
+}
+
+function _initFirebaseAfterLoad(){
   try{
     firebase.initializeApp({
       apiKey: "AIzaSyC1eGRFRVTi6RIReislDBOg7F7TTi2A7Kc",
@@ -2083,29 +2105,38 @@ if(document.readyState === 'loading'){
       async deleteGame(key){ await _db.ref('partite/' + key).remove(); }
     };
     window._fbReady = true;
-    if(typeof window._onFirebaseReady === 'function') window._onFirebaseReady();
+    window._onFirebaseReady();
   }catch(e){
-    console.warn('Firebase non disponibile, uso localStorage:', e.message);
-    // Fallback to localStorage so the game still works offline/file://
-    window._fb = {
-      async saveGame(key, data){
-        const saves = JSON.parse(localStorage.getItem('cm_saves')||'{}');
-        saves[key] = data; localStorage.setItem('cm_saves', JSON.stringify(saves));
-      },
-      async loadAll(){
-        return JSON.parse(localStorage.getItem('cm_saves')||'{}');
-      },
-      async deleteGame(key){
-        const saves = JSON.parse(localStorage.getItem('cm_saves')||'{}');
-        delete saves[key]; localStorage.setItem('cm_saves', JSON.stringify(saves));
-      }
-    };
-    window._fbReady = true;
-    if(typeof window._onFirebaseReady === 'function') window._onFirebaseReady();
-    const lbl = document.getElementById('fbLabel');
-    if(lbl) lbl.textContent = 'Offline (localStorage)';
+    console.warn('Firebase init fallback:', e.message);
+    _activateLocalStorage();
   }
-})();
+}
+
+function _loadScript(src, onload, onerror){
+  const s = document.createElement('script');
+  s.src = src;
+  s.onload = onload;
+  s.onerror = onerror;
+  document.head.appendChild(s);
+}
+
+// Start loading — if either SDK fails, go to localStorage immediately
+_loadScript(
+  'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
+  function(){
+    _loadScript(
+      'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js',
+      _initFirebaseAfterLoad,
+      function(){ console.warn('DB SDK failed'); _activateLocalStorage(); }
+    );
+  },
+  function(){ console.warn('App SDK failed'); _activateLocalStorage(); }
+);
+
+// Hard timeout: if Firebase takes more than 5 seconds, use localStorage
+setTimeout(function(){
+  if(!window._fbReady){ console.warn('Firebase timeout'); _activateLocalStorage(); }
+}, 5000);
 </script>
 
 <!-- FORMATION OVERLAY -->
